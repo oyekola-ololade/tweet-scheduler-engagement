@@ -35,8 +35,18 @@ Posts tweets at their scheduled time and reports back likes/retweets/replies 24 
 
 ## Architecture
 
-Open the [visual project page](./index.html#architecture) for the flow derived from the sanitized export.
+The diagram below represents the sanitized template flow. External services, credentials, and environment-specific identifiers must be configured before execution.
 
+```mermaid
+flowchart TD
+    A["Queued tweet trigger"] --> B{"Scheduled time reached?"}
+    B -->|No| C["Leave queued"]
+    B -->|Yes| D["Publish to Twitter / X"]
+    D --> E["Store tweet ID"]
+    E --> F["Wait 24 hours"]
+    F --> G["Fetch engagement metrics"]
+    G --> H["Post Slack summary"]
+```
 
 ## Workflow
 
