@@ -1,0 +1,460 @@
+{
+  "name": "T26_Tweet_Scheduler_Engagement",
+  "nodes": [
+    {
+      "id": "36d25974-3cb7-4536-a018-afcba9a02da7",
+      "name": "Note_2e0053fa",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        50,
+        50
+      ],
+      "parameters": {
+        "content": "Created by Oyekola Ololade\nhttps://www.linkedin.com/in/ololade-oyekola-5b1797397/\nn8n Template Library - Gumroad",
+        "width": 300,
+        "height": 100,
+        "color": 4
+      }
+    },
+    {
+      "id": "60c7ff1b-58d1-4a31-9db1-c8b8bfe97fee",
+      "name": "Tweet Schedule Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "b881c563-7d3d-4782-a215-e019528eea00",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tweet-scheduler",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "000b7426-c2b5-4ae5-aa97-c8e52e2236ae",
+      "name": "Extract Tweet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        450,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b6dfd0a7-4b9f-4541-8822-42a79ce8af52",
+              "name": "scheduled_date",
+              "value": "={{ $json.body.scheduled_date }}",
+              "type": "string"
+            },
+            {
+              "id": "84388f7a-d81f-4490-b212-e29976b878d8",
+              "name": "time",
+              "value": "={{ $json.body.time }}",
+              "type": "string"
+            },
+            {
+              "id": "eba9f123-7011-4b05-908b-a7c15c730c78",
+              "name": "content",
+              "value": "={{ $json.body.tweet_content }}",
+              "type": "string"
+            },
+            {
+              "id": "21dbbd3d-1a33-43be-b3e2-d69be0e06399",
+              "name": "media_url",
+              "value": "={{ $json.body.media_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6103bb84-9852-4c5a-bb21-83678de6a301",
+      "name": "Time to Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "b676873b-4089-446e-b9ff-84b93bb49f45",
+              "leftValue": "={{ $now.format('HH:mm') }}",
+              "rightValue": "={{ $json.time }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dcd5826d-83e1-4b9a-91f8-6d7f817c4777",
+      "name": "Post to Twitter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        850,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twitter.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TWITTER_BEARER"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7b0906a8-f5c6-49f8-acf6-a00bcd86ff61",
+      "name": "Track Tweet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1050,
+        200
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "107d0762-c24b-4ec5-9127-686c7a921aa3",
+              "name": "tweet_id",
+              "value": "={{ $json.data.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e06946d6-5f03-457d-9a34-0eddb40c8a03",
+              "name": "posted_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e4723d7a-5f28-481e-86aa-1c5ceb8c4c0b",
+      "name": "Wait 24h",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f610235a-594a-43d5-ae6c-1a7c8587e925",
+              "name": "wait",
+              "value": "24 hours",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3131043a-646c-4ed6-8dcd-7fec4e7302c2",
+      "name": "Fetch Engagement",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.twitter.com/2/tweets/{{ $json.tweet_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TWITTER_BEARER"
+            }
+          ]
+        },
+        "options": {
+          "qs": {
+            "tweet.fields": "public_metrics"
+          }
+        }
+      }
+    },
+    {
+      "id": "64858b3d-f6a4-44cd-bf32-c10cb724aaf3",
+      "name": "Parse Metrics",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "76e682c5-9a6d-4422-a2a3-76ebf2163183",
+              "name": "likes",
+              "value": "={{ $json.data.public_metrics.like_count }}",
+              "type": "string"
+            },
+            {
+              "id": "287ced86-569c-439a-9e5e-e849bb16dd2e",
+              "name": "retweets",
+              "value": "={{ $json.data.public_metrics.retweet_count }}",
+              "type": "string"
+            },
+            {
+              "id": "366810b9-1c9a-4dff-8a12-7de60e030ea5",
+              "name": "replies",
+              "value": "={{ $json.data.public_metrics.reply_count }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c8ef5f42-5caa-45cf-9942-a79085e41afc",
+      "name": "Slack Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1650,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_SLACK_WEBHOOK_URL",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "headerParameters": {
+          "parameters": []
+        },
+        "options": {},
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=\"Today best tweet: \" + $json.content + \" | Likes: \" + $json.likes + \" | RTs: \" + $json.retweets"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "28b4b6f2-d2c1-4d8b-b42e-5b89e78ca36c",
+      "name": "Not Yet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        850,
+        400
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2073f481-f0d0-4c97-9f4b-2de68f07a910",
+              "name": "status",
+              "value": "scheduled",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6cd773a3-7666-4682-b09a-769c4f290eb3",
+      "name": "End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Tweet Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Tweet": {
+      "main": [
+        [
+          {
+            "node": "Time to Post?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Time to Post?": {
+      "main": [
+        [
+          {
+            "node": "Post to Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Twitter": {
+      "main": [
+        [
+          {
+            "node": "Track Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track Tweet": {
+      "main": [
+        [
+          {
+            "node": "Wait 24h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 24h": {
+      "main": [
+        [
+          {
+            "node": "Fetch Engagement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Engagement": {
+      "main": [
+        [
+          {
+            "node": "Parse Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Metrics": {
+      "main": [
+        [
+          {
+            "node": "Slack Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Summary": {
+      "main": [
+        [
+          {
+            "node": "End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Yet": {
+      "main": [
+        [
+          {
+            "node": "End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "Gumroad",
+    "Production",
+    "Template",
+    "Oyekola Ololade"
+  ],
+  "pinData": {},
+  "staticData": null
+}
